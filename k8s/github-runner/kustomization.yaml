@@ -4,8 +4,7 @@ kind: Kustomization
 namespace: github-runner
 
 resources:
-  - serviceaccount.yaml
-  - runner-secret.yaml
-  - kubeconfig-configmap.yaml
-  - deployment.yaml
+  - github-config-secret.yaml
+  - autoscalingrunnerset.yaml
+  - runner-rbac.yaml
 

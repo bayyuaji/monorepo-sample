@@ -27,6 +27,15 @@ K8S_NODE_LOCAL_PATH     ?= k8s/node-service/overlays/local
 K8S_MONITORING_PATH     ?= k8s/monitoring
 K8S_GITHUB_RUNNER_PATH  ?= k8s/github-runner
 
+# GitHub Actions Runner Controller (ARC) config
+GITHUB_RUNNER_NAMESPACE     ?= github-runner
+ARC_CONTROLLER_RELEASE_NAME ?= arc
+ARC_CONTROLLER_CHART        ?= oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+
+# GHCR auth (set GHCR_TOKEN via env, jangan di-commit)
+GHCR_USERNAME           ?= bayyuaji
+GHCR_TOKEN              ?=
+
 # -------------------------------------------------------------------
 # HELP
 # -------------------------------------------------------------------
@@ -37,36 +46,36 @@ help:
 	@echo "Monorepo Go + Node local K8s Make targets"
 	@echo ""
 	@echo "  CLUSTER"
-	@echo "    make up                   - Create KinD cluster"
-	@echo "    make down                 - Delete KinD cluster"
+	@echo "    make up                     - Create KinD cluster"
+	@echo "    make down                   - Delete KinD cluster"
 	@echo ""
 	@echo "  IMAGES (local, then loaded into KinD)"
-	@echo "    make images               - Build Go + Node images"
-	@echo "    make images-go            - Build Go image"
-	@echo "    make images-node          - Build Node image"
-	@echo "    make images-load          - kind load docker-image for Go + Node"
+	@echo "    make images                 - Build Go + Node images"
+	@echo "    make images-go              - Build Go image"
+	@echo "    make images-node            - Build Node image"
+	@echo "    make images-load            - kind load docker-image for Go + Node"
 	@echo ""
 	@echo "  DEPLOY (Kustomize + overlays)"
-	@echo "    make deploy-cluster       - Deploy Gateway API CRDs + namespaces + Gateway + HTTPRoutes + ReferenceGrants"
-	@echo "    make deploy-monitoring    - Deploy OTel Collector + Prometheus + Grafana"
-	@echo "    make deploy-go            - Deploy Go service (overlays/local)"
-	@echo "    make deploy-node          - Deploy Node service (overlays/local)"
-	@echo "    make deploy               - Deploy cluster + monitoring + Go + Node"
+	@echo "    make deploy-cluster         - Deploy Gateway API CRDs + namespaces + Gateway + HTTPRoutes + ReferenceGrants"
+	@echo "    make deploy-monitoring      - Deploy OTel Collector + Prometheus + Grafana"
+	@echo "    make deploy-go              - Deploy Go service (overlays/local)"
+	@echo "    make deploy-node            - Deploy Node service (overlays/local)"
+	@echo "    make deploy                 - Deploy cluster + monitoring + Go + Node"
 	@echo ""
-	@echo "  GITHUB RUNNER"
-	@echo "    make deploy-github-runner   - Deploy GitHub self-hosted runner to cluster"
-	@echo "    make undeploy-github-runner - Delete GitHub self-hosted runner from cluster"
+	@echo "  GITHUB RUNNER (ARC)"
+	@echo "    make deploy-github-runner   - Login GHCR, install ARC controller + AutoscalingRunnerSet (ns: $(GITHUB_RUNNER_NAMESPACE))"
+	@echo "    make undeploy-github-runner - Uninstall ARC controller + runner resources"
 	@echo ""
 	@echo "  CLEANUP"
-	@echo "    make undeploy-go          - Delete Go service"
-	@echo "    make undeploy-node        - Delete Node service"
-	@echo "    make undeploy-monitoring  - Delete monitoring stack"
-	@echo "    make undeploy-cluster     - Delete cluster base objects"
-	@echo "    make undeploy-all         - Delete everything"
+	@echo "    make undeploy-go            - Delete Go service"
+	@echo "    make undeploy-node          - Delete Node service"
+	@echo "    make undeploy-monitoring    - Delete monitoring stack"
+	@echo "    make undeploy-cluster       - Delete cluster base objects"
+	@echo "    make undeploy-all           - Delete everything"
 	@echo ""
 	@echo "  UTILS"
-	@echo "    make status               - Show nodes & pods"
-	@echo "    make kube-context         - Print KUBECONFIG export line"
+	@echo "    make status                 - Show nodes & pods"
+	@echo "    make kube-context           - Print KUBECONFIG export line"
 	@echo ""
 	@echo "Tips:"
 	@echo "  After 'make up', run:"
@@ -167,8 +176,24 @@ deploy-node:
 
 .PHONY: deploy-github-runner
 deploy-github-runner:
-	@echo ">>> Deploying GitHub self-hosted runner (kustomize: $(K8S_GITHUB_RUNNER_PATH))..."
+	@echo ">>> Installing GitHub Actions Runner Controller (ARC) into namespace '$(GITHUB_RUNNER_NAMESPACE)'..."
+	@if ! command -v helm >/dev/null 2>&1; then echo "Helm not installed"; exit 1; fi
+	@if ! command -v docker >/dev/null 2>&1; then echo "Docker not installed"; exit 1; fi
+	@if [ -z "$(GHCR_TOKEN)" ]; then \
+	  echo "ERROR: GHCR_TOKEN is not set."; \
+	  echo "Please export GHCR_TOKEN=<your_github_pat_with_read:packages> before running make deploy-github-runner"; \
+	  exit 1; \
+	fi
+	@echo ">>> Logging in to ghcr.io as $(GHCR_USERNAME)..."
+	@echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_USERNAME)" --password-stdin
+	@echo ">>> Helm installing/upgrading ARC controller release '$(ARC_CONTROLLER_RELEASE_NAME)'..."
+	@helm upgrade --install $(ARC_CONTROLLER_RELEASE_NAME) \
+	  --namespace $(GITHUB_RUNNER_NAMESPACE) \
+	  --create-namespace \
+	  $(ARC_CONTROLLER_CHART)
+	@echo ">>> Applying GitHub runner Kustomize manifests from $(K8S_GITHUB_RUNNER_PATH)..."
 	@kubectl apply -k $(K8S_GITHUB_RUNNER_PATH)
+	@echo ">>> ARC controller + AutoscalingRunnerSet deployed."
 
 # -------------------------------------------------------------------
 # CLEANUP
@@ -196,8 +221,10 @@ undeploy-cluster:
 
 .PHONY: undeploy-github-runner
 undeploy-github-runner:
-	@echo ">>> Deleting GitHub self-hosted runner..."
+	@echo ">>> Deleting GitHub runner Kustomize manifests..."
 	@kubectl delete -k $(K8S_GITHUB_RUNNER_PATH) --ignore-not-found
+	@echo ">>> Uninstalling ARC controller Helm release '$(ARC_CONTROLLER_RELEASE_NAME)' from namespace '$(GITHUB_RUNNER_NAMESPACE)'..."
+	@helm uninstall $(ARC_CONTROLLER_RELEASE_NAME) --namespace $(GITHUB_RUNNER_NAMESPACE) || true
 
 .PHONY: undeploy-all
 undeploy-all: undeploy-go undeploy-node undeploy-monitoring undeploy-cluster undeploy-github-runner

@@ -1,0 +1,30 @@
+apiVersion: actions.github.com/v1alpha1
+kind: AutoscalingRunnerSet
+metadata:
+  name: monorepo-runners
+  namespace: github-runner
+spec:
+  githubConfigUrl: "https://github.com/bayyuaji/monorepo-sample"
+  githubConfigSecret: github-config-secret
+
+  minRunners: 0
+  maxRunners: 5
+
+  template:
+    spec:
+      restartPolicy: Never
+
+      serviceAccountName: github-runner-arc
+
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner:latest
+          command: ["/home/runner/run.sh"]
+          env:
+            - name: ACTIONS_RUNNER_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+              value: "false"
+
