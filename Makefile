@@ -20,11 +20,12 @@ GO_APP_PATH         ?= apps/go-service
 NODE_APP_PATH       ?= apps/node-service
 
 # Kustomize paths
-K8S_GATEWAY_CRDS_PATH ?= k8s/cluster/gateway-crds
-K8S_CLUSTER_PATH      ?= k8s/cluster/base
-K8S_GO_LOCAL_PATH     ?= k8s/go-service/overlays/local
-K8S_NODE_LOCAL_PATH   ?= k8s/node-service/overlays/local
-K8S_MONITORING_PATH   ?= k8s/monitoring
+K8S_GATEWAY_CRDS_PATH   ?= k8s/cluster/gateway-crds
+K8S_CLUSTER_PATH        ?= k8s/cluster/base
+K8S_GO_LOCAL_PATH       ?= k8s/go-service/overlays/local
+K8S_NODE_LOCAL_PATH     ?= k8s/node-service/overlays/local
+K8S_MONITORING_PATH     ?= k8s/monitoring
+K8S_GITHUB_RUNNER_PATH  ?= k8s/github-runner
 
 # -------------------------------------------------------------------
 # HELP
@@ -51,6 +52,10 @@ help:
 	@echo "    make deploy-go            - Deploy Go service (overlays/local)"
 	@echo "    make deploy-node          - Deploy Node service (overlays/local)"
 	@echo "    make deploy               - Deploy cluster + monitoring + Go + Node"
+	@echo ""
+	@echo "  GITHUB RUNNER"
+	@echo "    make deploy-github-runner   - Deploy GitHub self-hosted runner to cluster"
+	@echo "    make undeploy-github-runner - Delete GitHub self-hosted runner from cluster"
 	@echo ""
 	@echo "  CLEANUP"
 	@echo "    make undeploy-go          - Delete Go service"
@@ -160,6 +165,11 @@ deploy-node:
 	@echo ">>> Deploying Node service (overlay: local)..."
 	@kubectl apply -k $(K8S_NODE_LOCAL_PATH)
 
+.PHONY: deploy-github-runner
+deploy-github-runner:
+	@echo ">>> Deploying GitHub self-hosted runner (kustomize: $(K8S_GITHUB_RUNNER_PATH))..."
+	@kubectl apply -k $(K8S_GITHUB_RUNNER_PATH)
+
 # -------------------------------------------------------------------
 # CLEANUP
 # -------------------------------------------------------------------
@@ -184,8 +194,13 @@ undeploy-cluster:
 	@echo ">>> Deleting cluster base resources..."
 	@kubectl delete -k $(K8S_CLUSTER_PATH) --ignore-not-found
 
+.PHONY: undeploy-github-runner
+undeploy-github-runner:
+	@echo ">>> Deleting GitHub self-hosted runner..."
+	@kubectl delete -k $(K8S_GITHUB_RUNNER_PATH) --ignore-not-found
+
 .PHONY: undeploy-all
-undeploy-all: undeploy-go undeploy-node undeploy-monitoring undeploy-cluster
+undeploy-all: undeploy-go undeploy-node undeploy-monitoring undeploy-cluster undeploy-github-runner
 	@echo ">>> Everything deleted."
 
 # -------------------------------------------------------------------

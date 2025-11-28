@@ -16,7 +16,7 @@ spec:
       serviceAccountName: github-runner
       containers:
         - name: runner
-          image: ghcr.io/actions/actions-runner:latest 
+          image: ghcr.io/actions/actions-runner:2.322.0
           env:
             - name: REPO_URL
               value: "https://github.com/bayyuaji/monorepo-sample"
