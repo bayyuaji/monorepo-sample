@@ -182,7 +182,7 @@ export GHCR_USERNAME="bayyuaji"
 export KUBECONFIG=$HOME/.kube/kind-monorepo-local
 ```
 
-## 2, Install the GitHub ARC Controller & Runner Scale Set
+## 2. Install the GitHub ARC Controller & Runner Scale Set
 Install ARC controller + CRDs + AutoScalingRunnerSet using the Makefile:
 ```
 make deploy-github-runner
