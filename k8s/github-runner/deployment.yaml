@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: github-runner
+  namespace: apps    # sesuaikan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: github-runner
+  template:
+    metadata:
+      labels:
+        app: github-runner
+    spec:
+      serviceAccountName: github-runner
+      containers:
+        - name: runner
+          image: ghcr.io/actions/actions-runner:latest 
+          env:
+            - name: REPO_URL
+              value: "https://github.com/bayyuaji/monorepo-sample"
+            - name: RUNNER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: runner-secret
+                  key: token
+            - name: RUNNER_NAME
+              value: "k8s-github-runner"
+            - name: RUNNER_WORKDIR
+              value: "/tmp/runner"
+            - name: LABELS
+              value: "self-hosted,k8s-runner"
+            - name: KUBECONFIG
+              value: /kube/config
+          volumeMounts:
+            - name: kubeconfig
+              mountPath: /kube
+              readOnly: true
+      volumes:
+        - name: kubeconfig
+          configMap:
+            name: github-runner-kubeconfig
+            items:
+              - key: config
+                path: config
+

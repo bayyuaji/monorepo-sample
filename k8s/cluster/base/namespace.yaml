@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: go-app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: node-app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: github-runner
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway
+

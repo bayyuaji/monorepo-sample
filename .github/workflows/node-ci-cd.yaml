@@ -1,0 +1,110 @@
+name: Node Service CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "apps/node-service/**"
+
+env:
+  DOCKERHUB_NAMESPACE: bayyuaji
+  NODE_APP_VERSION: "1.2.3"
+  K8S_NAMESPACE: "apps"
+
+jobs:
+  node-ci-cd:
+    name: Test, Build, Deploy Node Service
+    runs-on: [self-hosted, k8s-runner]   # label runner dari env LABELS di deployment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------- TEST ----------
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Node dependencies
+        working-directory: apps/node-service
+        run: npm ci
+
+      - name: Run Node tests
+        working-directory: apps/node-service
+        run: |
+          if [ -f package.json ]; then
+            if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)" 2>/dev/null; then
+              npm test
+            else
+              echo "No test script defined in package.json, skipping tests"
+            fi
+          else
+            echo "No package.json found, skipping tests"
+          fi
+
+      # ---------- BUILD ----------
+      - name: Docker login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Node image
+        run: |
+          NODE_IMAGE="${DOCKERHUB_NAMESPACE}/monorepo:node-${NODE_APP_VERSION}"
+          echo "Building image ${NODE_IMAGE}"
+          docker build \
+            -f apps/node-service/Dockerfile \
+            -t "${NODE_IMAGE}" \
+            apps/node-service
+
+      - name: Push Node image
+        run: |
+          NODE_IMAGE="${DOCKERHUB_NAMESPACE}/monorepo:node-${NODE_APP_VERSION}"
+          docker push "${NODE_IMAGE}"
+
+      # ---------- DEPLOY ----------
+      - name: Ensure kubectl installed
+        run: |
+          if ! command -v kubectl >/dev/null 2>&1; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            mv kubectl /usr/local/bin/kubectl
+          else
+            echo "kubectl already installed"
+          fi
+
+      - name: Ensure kustomize installed
+        run: |
+          if ! command -v kustomize >/dev/null 2>&1; then
+            curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+            mv kustomize /usr/local/bin/kustomize
+          else
+            echo "kustomize already installed"
+          fi
+
+      - name: Check current Kubernetes context
+        run: |
+          kubectl config current-context || echo "No current context"
+          kubectl get nodes
+
+      - name: Apply Node service overlay (ci-cd)
+        run: |
+          if [ -d "k8s/node-service/overlays/ci-cd" ]; then
+            kustomize build k8s/node-service/overlays/ci-cd | kubectl apply -f -
+          else
+            echo "Node ci-cd overlay not found, skipping"
+          fi
+
+      - name: Update Node deployment image to latest tag
+        run: |
+          NODE_IMAGE="${DOCKERHUB_NAMESPACE}/monorepo:node-${NODE_APP_VERSION}"
+          echo "Updating node-service image to ${NODE_IMAGE}"
+          kubectl -n "${K8S_NAMESPACE}" set image deployment/node-service \
+            node-service="${NODE_IMAGE}" \
+            --record
+
+      - name: Wait for Node deployment rollout
+        run: |
+          kubectl -n "${K8S_NAMESPACE}" rollout status deployment/node-service
+
