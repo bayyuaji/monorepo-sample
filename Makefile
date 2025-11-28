@@ -28,9 +28,11 @@ K8S_MONITORING_PATH     ?= k8s/monitoring
 K8S_GITHUB_RUNNER_PATH  ?= k8s/github-runner
 
 # GitHub Actions Runner Controller (ARC) config
-GITHUB_RUNNER_NAMESPACE     ?= github-runner
-ARC_CONTROLLER_RELEASE_NAME ?= arc
-ARC_CONTROLLER_CHART        ?= oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+GITHUB_RUNNER_NAMESPACE      ?= github-runner
+ARC_CONTROLLER_RELEASE_NAME  ?= arc
+ARC_CRDS_RELEASE_NAME        ?= arc-crds
+ARC_CONTROLLER_CHART         ?= oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller
+ARC_CRDS_CHART               ?= oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set
 
 # GHCR auth (set GHCR_TOKEN via env, jangan di-commit)
 GHCR_USERNAME           ?= bayyuaji
@@ -63,8 +65,8 @@ help:
 	@echo "    make deploy                 - Deploy cluster + monitoring + Go + Node"
 	@echo ""
 	@echo "  GITHUB RUNNER (ARC)"
-	@echo "    make deploy-github-runner   - Login GHCR, install ARC controller + AutoscalingRunnerSet (ns: $(GITHUB_RUNNER_NAMESPACE))"
-	@echo "    make undeploy-github-runner - Uninstall ARC controller + runner resources"
+	@echo "    make deploy-github-runner   - Login GHCR, install ARC controller + CRDs + AutoScalingRunnerSet (ns: $(GITHUB_RUNNER_NAMESPACE))"
+	@echo "    make undeploy-github-runner - Uninstall ARC controller + CRDs + runner resources"
 	@echo ""
 	@echo "  CLEANUP"
 	@echo "    make undeploy-go            - Delete Go service"
@@ -181,7 +183,7 @@ deploy-github-runner:
 	@if ! command -v docker >/dev/null 2>&1; then echo "Docker not installed"; exit 1; fi
 	@if [ -z "$(GHCR_TOKEN)" ]; then \
 	  echo "ERROR: GHCR_TOKEN is not set."; \
-	  echo "Please export GHCR_TOKEN=<your_github_pat_with_read:packages> before running make deploy-github-runner"; \
+	  echo "Please export GHCR_TOKEN=<your_github_pat_with_read:packages+repo+admin:org> before running make deploy-github-runner"; \
 	  exit 1; \
 	fi
 	@echo ">>> Logging in to ghcr.io as $(GHCR_USERNAME)..."
@@ -191,9 +193,18 @@ deploy-github-runner:
 	  --namespace $(GITHUB_RUNNER_NAMESPACE) \
 	  --create-namespace \
 	  $(ARC_CONTROLLER_CHART)
+	@echo ">>> Helm installing/upgrading ARC CRDs & runner-scale-set release '$(ARC_CRDS_RELEASE_NAME)'..."
+	@helm upgrade --install $(ARC_CRDS_RELEASE_NAME) \
+	  --namespace $(GITHUB_RUNNER_NAMESPACE) \
+	  --create-namespace \
+	  --set githubConfigUrl="https://github.com/bayyuaji/monorepo-sample" \
+	  --set githubConfigSecret.github_token="$(GHCR_TOKEN)" \
+	  $(ARC_CRDS_CHART)
 	@echo ">>> Applying GitHub runner Kustomize manifests from $(K8S_GITHUB_RUNNER_PATH)..."
 	@kubectl apply -k $(K8S_GITHUB_RUNNER_PATH)
-	@echo ">>> ARC controller + AutoscalingRunnerSet deployed."
+	@echo ">>> ARC controller + AutoScalingRunnerSet deployed."
+
+
 
 # -------------------------------------------------------------------
 # CLEANUP
@@ -225,6 +236,8 @@ undeploy-github-runner:
 	@kubectl delete -k $(K8S_GITHUB_RUNNER_PATH) --ignore-not-found
 	@echo ">>> Uninstalling ARC controller Helm release '$(ARC_CONTROLLER_RELEASE_NAME)' from namespace '$(GITHUB_RUNNER_NAMESPACE)'..."
 	@helm uninstall $(ARC_CONTROLLER_RELEASE_NAME) --namespace $(GITHUB_RUNNER_NAMESPACE) || true
+	@echo ">>> Uninstalling ARC CRDs Helm release '$(ARC_CRDS_RELEASE_NAME)' from namespace '$(GITHUB_RUNNER_NAMESPACE)'..."
+	@helm uninstall $(ARC_CRDS_RELEASE_NAME) --namespace $(GITHUB_RUNNER_NAMESPACE) || true
 
 .PHONY: undeploy-all
 undeploy-all: undeploy-go undeploy-node undeploy-monitoring undeploy-cluster undeploy-github-runner

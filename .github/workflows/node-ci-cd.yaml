@@ -14,7 +14,7 @@ env:
 jobs:
   node-ci-cd:
     name: Test, Build, Deploy Node Service
-    runs-on: [self-hosted, monorepo-runners]
+    runs-on: [self-hosted, monorepo-runners, arc-crds]
 
     steps:
       - name: Checkout repository

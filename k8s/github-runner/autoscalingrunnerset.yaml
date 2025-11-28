@@ -1,5 +1,5 @@
 apiVersion: actions.github.com/v1alpha1
-kind: AutoscalingRunnerSet
+kind: AutoScalingRunnerSet
 metadata:
   name: monorepo-runners
   namespace: github-runner
