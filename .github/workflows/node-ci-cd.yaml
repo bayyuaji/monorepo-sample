@@ -14,7 +14,7 @@ env:
 jobs:
   node-ci-cd:
     name: Test, Build, Deploy Node Service
-    runs-on: [self-hosted, k8s-runner]   # label runner dari env LABELS di deployment
+    runs-on: [self-hosted, monorepo-runners]
 
     steps:
       - name: Checkout repository

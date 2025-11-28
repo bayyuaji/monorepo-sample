@@ -14,7 +14,7 @@ env:
 jobs:
   go-ci-cd:
     name: Test, Build, Deploy Go Service
-    runs-on: [self-hosted, k8s-runner]
+    runs-on: [self-hosted, monorepo-runners]
 
     steps:
       - name: Checkout repository
