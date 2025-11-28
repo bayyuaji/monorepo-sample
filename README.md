@@ -121,16 +121,6 @@ Install the following tools before using this project:
 
 ---
 
-# Environment Variables
-
-Set these before installing the GitHub ARC runner:
-
-```
-export GHCR_TOKEN="ghp_xxx_your_pat_here"
-export GHCR_USERNAME="bayyuaji"
-export KUBECONFIG=$HOME/.kube/kind-monorepo-local
-```
-
 #  Getting Started
 
 1. Create The KinD Cluster
