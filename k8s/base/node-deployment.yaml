@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-service
+  namespace: node-apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-service
+  template:
+    metadata:
+      labels:
+        app: node-service
+    spec:
+      containers:
+        - name: node-service
+          image: ghcr.io/mendhak/http-https-echo:38
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-service
+  namespace: node-apps
+spec:
+  selector:
+    app: node-service
+  ports:
+    - port: 80
+      targetPort: 8080
+
