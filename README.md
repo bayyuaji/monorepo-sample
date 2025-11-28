@@ -1,30 +1,99 @@
-IyBNb25vcmVwbyBTYW1wbGUg4oCUIEdvICsgTm9kZSArIExvY2FsIEt1YmVybm
-V0ZXMgKEtpbmQpICsgR2l0SHViIEFjdGlvbnMgQ0kvQ0QgKyBTZWxmLUhvc3Rl
-ZCBSdW5uZXIKClRoaXMgcmVwb3NpdG9yeSBpcyBhIGZ1bGx5IHdvcmtpbmcgKi
-oqbG9jYWwgS3ViZXJuZXRlcyBtb25vcmVwbyoqKiBjb250YWluaW5nOgoKLSBH
-byBzZXJ2aWNlIChkYXBwcy9nby1zZXJ2aWNlYCkKLSBOb2RlIHNlcnZpY2UgKG
-BhcHBzL25vZGUtc2VydmljZWApCi0gTG9jYWwgS3ViZXJuZXRlcyBjbHVzdGVy
-IHZpYSAqKktpbkQqKgotICoqR2F0ZXdheSBBUEkqKihnYXRld2F5LCBodHRwcm
-91dGUsIHJlZmVyZW5jZWdyYW50KQotICoqTW9uaXRvcmluZyBzdGFjayoqIChP
-VGVsIENvbGxlY3RvciwgUHJvbWV0aGVvdXMsIEdyYWZhbmEpCi0gR2l0SHViIC
-oqU2VsZi1Ib3N0ZWQgUnVubmVyKiogcnVubmluZyBhcCBwdW4gaW4gdGhlICoq
-S2luZCBjbHVzdGVyKiopCi0gR2l0SHViIEFjdGlvbnMgKipDST9DRCoqIChOb2
-RlICsgR28pCi0gQ0kgYXV0by1kZXBsb3kgdG8gbG9jYWwgY2x1c3RlcgoKRXZl
-cnl0aGluZyBpcyBvcmdhbml6ZWQgdXNpbmcgYSBzaW5nbGUgKipNYWtlZmlsZS
-oqqgoKLS0tCgojIPCfk6YgRm9sZGVyIFN0cnVjdHVyZQoKYGAuCuwKCjEuLi4K
-YGAKCi0tLQoKIyDwn6KmIFJlcXVpcmVzaXRlcwoKfCBUb29sIHwgVmVyc2lvbi
-B8Clx8IERvY2tlciBEZXNrdG9wIHwgbGF0ZXN0IHwKfCBraW5kIHwg4oCiIDAu
-MjAgfAp8IGt1YmVjdGwgfCBsYXRlc3QgfAp8IGt1c3RvbWl6ZSB8IGxhdGVzdC
-B8CgotLS0KCiMg8J+UkCBTZWxmLUhvc3RlZCBSdW5uZXIgU2VjcmV0CgoxLiBHZX
-QgInJlZ2lzdHJhdGlvbiB0b2tlbiIgZnJvbSBHaXRIdWIgUi90cnVubmVycwoK
-Mi4gRW5jb2RlOgoKYGBgCmVjaG8gLW4gIllPVVJfVE9LRU4iIHwgYmFzZTY0Cm
-BgYAoKMy4gRmlsbCBpbnRvOgoKYGBgCms4cy9naXRodWItcnVubmVyL3J1bm5l
-ci1zZWNyZXQueWFtbApgYGAKCi0tLQoKIyDwn7SiIE1ha2UgQ29tbWFuZHMKCl
-NldHVwIGNsdXN0ZXI6CgpgYGAKbWFrZSB1cApleHBvcnQgS1VCRUNPTkZJRz0k
-SE9NRS8ua3ViZS9raW5kLW1vbm9yZXBvLWxvY2FsCmBgYAoKCkJ1aWxkIGltYW
-dlczoKYGBgCm1ha2UgaW1hZ2VzCm1ha2UgaW1hZ2VzLWxvYWQKYGBgCgoKRGVw
-bG95OgoKYGBgCm1ha2UgZGVwbG95LWNsdXN0ZXIKbWFrZSBkZXBsb3ktbW9uaX
-RvcmluZwpbIC4uLiBdCmBgYAoKCkNsZWFudXA6CmBgYAptYWtlIHVuZGVwbG95
-LWFsbAptYWtlIGRvd24KYGBgCgoKLS0tCgojIPCfmoIgQ0kvQ0QKCkZpbGVzOg
-otIGdvLWNpLWNkLnlhbWwKLSBub2RlLWNpLWNkLnlhbWwKCldvcmtmbG93cyB0
-ZXN0LCBidWlsZCwgcHVzaCwgZGVwbG95LgoKLS0tCgojIPCfjokgRG9uZQo=
+# Monorepo Sample — Go + Node + Local Kubernetes (Kind) + GitHub Actions CI/CD + Self-Hosted Runner
+
+This repository is a fully working ***local Kubernetes monorepo*** containing:
+
+- Go service (dapps/go-service`)
+- Node service (`apps/node-service`)
+- Local Kubernetes cluster via **KinD**
+- **Gateway API**(gateway, httproute, referencegrant)
+- **Monitoring stack** (OTel Collector, Prometheous, Grafana)
+- GitHub **Self-Hosted Runner** running ap pun in the **Kind cluster**)
+- GitHub Actions **CI?CD** (Node + Go)
+- CI auto-deploy to local cluster
+
+Everything is organized using a single **Makefile**?
+
+---
+
+# 📦 Folder Structure
+
+``.
+?
+
+1...
+``
+
+---
+
+# 🢦 Requiresites
+
+| Tool | Version |
+\| Docker Desktop | latest |
+| kind | • 0.20 |
+| kubectl | latest |
+| kustomize | latest |
+
+---
+
+# 🔐 Self-Hosted Runner Secret
+
+1. Get "registration token" from GitHub R/trunners
+
+2. Encode:
+
+```
+echo -n "YOUR_TOKEN" | base64
+```
+
+3. Fill into:
+
+```
+k8s/github-runner/runner-secret.yaml
+```
+
+---
+
+# 🴢 Make Commands
+
+Setup cluster:
+
+```
+make up
+export KUBECONFIG=$HOME/.kube/kind-monorepo-local
+```
+
+
+Build images:
+```
+make images
+make images-load
+```
+
+
+Deploy:
+
+```
+make deploy-cluster
+make deploy-monitoring
+[ ... ]
+```
+
+
+Cleanup:
+```
+make undeploy-all
+make down
+```
+
+
+---
+
+# 🚂 CI/CD
+
+Files:
+- go-ci-cd.yaml
+- node-ci-cd.yaml
+
+Workflows test, build, push, deploy.
+
+---
