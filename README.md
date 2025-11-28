@@ -17,10 +17,6 @@ Included components:
 # Folder Structure
 Everything is organized using a single **Makefile**
 
----
-
-# Folder Structure
-
 ```
 .
 ├── Makefile
