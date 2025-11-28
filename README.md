@@ -256,9 +256,9 @@ Delete all workloads:
 make undeploy-all
 
 ```
-Delete Kind\D cluster
+Delete KinD cluster
 ```
-make undeploy-all
+make down
 ```
 
 ---
