@@ -1,23 +1,28 @@
-# Monorepo Sample — Go + Node + Local Kubernetes (Kind) + GitHub Actions CI/CD + Self-Hosted Runner
+# Monorepo Sample — Go + Node + Local Kubernetes (KinD) + Gateway API + Monitoring Stack + GitHub ARC Runner
 
-This repository is a fully working ***local Kubernetes monorepo*** containing:
+This repository contains a complete monorepo setup designed for **local Kubernetes development**, **GitOps-style deployment**, and **CI/CD using GitHub Actions with a self-hosted runner running inside KinD**.
 
-- Go service (dapps/go-service`)
-- Node service (`apps/node-service`)
-- Local Kubernetes cluster via **KinD**
-- **Gateway API**(gateway, httproute, referencegrant)
-- **Monitoring stack** (OTel Collector, Prometheous, Grafana)
-- GitHub **Self-Hosted Runner** running ap pun in the **Kind cluster**)
-- GitHub Actions **CI?CD** (Node + Go)
-- CI auto-deploy to local cluster
+Included components:
 
+- Go service (`apps/go-service`)
+- Node.js service (`apps/node-service`)
+- KinD (Kubernetes-in-Docker) development cluster
+- Gateway API (GatewayClass, Gateway, HTTPRoute, ReferenceGrant)
+- Monitoring stack (OpenTelemetry Collector, Prometheus, Grafana)
+- GitHub Actions Runner Controller (ARC) for scalable self-hosted runners
+- Makefile automation for building, deploying, and local testing
+
+---
+
+# Folder Structure
 Everything is organized using a single **Makefile**?
 
 ---
 
-# 📦 Folder Structure
+# Folder Structure
 
 ```
+.
 ├── Makefile
 ├── README.md
 ├── apps
@@ -52,11 +57,10 @@ Everything is organized using a single **Makefile**?
     │   ├── refgrant-go.yaml
     │   └── refgrant-node.yaml
     ├── github-runner
-    │   ├── deployment.yaml
-    │   ├── kubeconfig-configmap.yaml
+    │   ├── autoscalingrunnerset.yaml
+    │   ├── github-config-secret.yaml
     │   ├── kustomization.yaml
-    │   ├── runner-secret.yaml
-    │   └── serviceaccount.yaml
+    │   └── runner-rbac.yaml
     ├── go-service
     │   ├── base
     │   │   ├── deployment.yaml
@@ -91,23 +95,62 @@ Everything is organized using a single **Makefile**?
                 ├── image-patch.yaml
                 └── kustomization.yaml
 
+22 directories, 50 files
+```
+
+Each folder contains:
+
+- **base** manifests  
+- **overlays/local** for local KinD deployment  
+- **overlays/ci-cd** for automated CI/CD image patching  
+
+---
+
+# Requiresites
+
+# Prerequisites
+
+Install the following tools before using this project:
+
+```
+-----------------------------------------------------------------------------
+|    Tools   |                         Requirement                          |
+|------------|--------------------------------------------------------------|
+| Docker     | latest                                                       |
+| kubectl    | ≥ 1.26                                                       |
+| kind       | ≥ 0.20                                                       |
+| kustomize  | latest                                                       |
+| helm       | ≥ 3.13                                                       |
+| GitHub PAT | scopes: `repo`, `read:packages`, `admin:org` (if org runner) |
+-----------------------------------------------------------------------------
 ```
 
 ---
 
-# 🢦 Requiresites
+# Environment Variables
 
-| Tool | Version |
-\| Docker Desktop | latest |
-| kind | • 0.20 |
-| kubectl | latest |
-| kustomize | latest |
+Set these before installing the GitHub ARC runner:
 
----
+```
+export GHCR_TOKEN="ghp_xxx_your_pat_here"
+export GHCR_USERNAME="bayyuaji"
+export KUBECONFIG=$HOME/.kube/kind-monorepo-local
+```
 
-# 🔐 Self-Hosted Runner Secret
+#  Getting Started
 
-1. Get "registration token" from GitHub R/trunners
+1. Create The KinD Cluster
+```
+make up
+export KUBECONFIG=$HOME/.kube/kind-monorepo-local
+
+```
+2. Build and Load Local Images
+```
+make images
+make images-load
+```
+
 
 2. Encode:
 
@@ -115,50 +158,124 @@ Everything is organized using a single **Makefile**?
 echo -n "YOUR_TOKEN" | base64
 ```
 
-3. Fill into:
-
-```
-k8s/github-runner/runner-secret.yaml
-```
-
----
-
-# 🴢 Make Commands
-
-Setup cluster:
-
-```
-make up
-export KUBECONFIG=$HOME/.kube/kind-monorepo-local
-```
-
-
-Build images:
-```
-make images
-make images-load
-```
-
-
-Deploy:
+3. Deploy Core Components
 
 ```
 make deploy-cluster
 make deploy-monitoring
-[ ... ]
-```
+make deploy-go
+make deploy-node
 
-
-Cleanup:
 ```
-make undeploy-all
-make down
+To deploy everything at once:
 ```
+make deploy
+```
+---
 
+# GitHub Self-Hosted Runner (ARC)
+
+This repository uses **GitHub Actions Runner Controller (ARC)** to run CI/CD workloads **inside the KinD cluster**.  
+ARC automatically manages:
+
+- Self-hosted runner pods
+- Auto-scaling based on job demands
+- Ephemeral runners for improved security
+- Runner registration lifecycle
+
+This setup ensures that **all CI/CD pipelines run locally** without relying on GitHub-hosted runners.
 
 ---
 
-# 🚂 CI/CD
+## 1. Set Required Environment Variables
+
+Before installing ARC, export your GitHub token (PAT) and username:
+
+```
+export GHCR_TOKEN="ghp_xxx_your_pat_here"     # must have repo + read:packages scopes
+export GHCR_USERNAME="bayyuaji"
+export KUBECONFIG=$HOME/.kube/kind-monorepo-local
+```
+
+## 2, Install the GitHub ARC Controller & Runner Scale Set
+Install ARC controller + CRDs + AutoScalingRunnerSet using the Makefile:
+```
+make deploy-github-runner
+
+```
+This command performs:
+### 1. Authentication to ghcr.io using your Github PAT
+### 2. INstallation of ARC controller & ARC CRDs + default Runner Scale Set
+### 3. Deployment of your custom Kustomize resources under k8s/github-runner
+
+## 3. Verify Installation
+Check ARC controller:
+```
+kubectl get pods -n github-runner
+```
+You should see:
+```
+arc-gha-rs-controller-xxxxx
+```
+Check runner scale sets:
+```
+kubectl get autoscalingrunnersets.actions.github.com -n github-runner
+```
+Expected output:
+```
+arc-crds   1/1    Running
+```
+
+## 4. Verify Runner in Github UI
+
+```
+GitHub → Repository → Settings → Actions → Runners → Runner Scale Sets
+```
+## 5. Using Runner in Github Workflows
+Your GitHub Actions workflow should reference the scale set name exactly:
+```
+runs-on: arc-crds
+```
+
+## 6.  Testing Go and Node Service
+
+Go
+```
+kubectl port-forward svc/go-service -n go-service 8080:80
+curl http://localhost:8080
+```
+
+Node
+```
+kubectl port-forward svc/node-service -n node-service 3000:80
+curl http://localhost:3000
+```
+
+## 7. Monitoring Stack
+Prometheus
+```
+kubectl port-forward svc/prometheus -n monitoring 9090:9090
+http://localhost:9090
+```
+
+Grafana
+```
+kubectl port-forward svc/grafana -n monitoring 3001:3000
+http://localhost:3001
+```
+
+## Cleanup
+Delete all workloads:
+```
+make undeploy-all
+
+```
+Delete Kind\D cluster
+```
+make undeploy-all
+```
+
+# CI/CD
 
 Files:
 - go-ci-cd.yaml
