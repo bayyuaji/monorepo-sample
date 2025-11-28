@@ -17,11 +17,81 @@ Everything is organized using a single **Makefile**?
 
 # 📦 Folder Structure
 
-``.
-?
+```
+├── Makefile
+├── README.md
+├── apps
+│   ├── go-service
+│   │   ├── Dockerfile
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   └── main.go
+│   └── node-service
+│       ├── Dockerfile
+│       ├── index.js
+│       ├── package.json
+│       └── test
+│           └── basic.test.js
+└── k8s
+    ├── cluster
+    │   ├── base
+    │   │   ├── gateway.yaml
+    │   │   ├── gatewayclass.yaml
+    │   │   ├── httproute.yaml
+    │   │   ├── kustomization.yaml
+    │   │   ├── namespace.yaml
+    │   │   ├── refgrant-go.yaml
+    │   │   └── refgrant-node.yaml
+    │   └── gateway-crds
+    │       └── kustomization.yaml
+    ├── gateway
+    │   ├── gateway.yaml
+    │   ├── gatewayclass.yaml
+    │   ├── httproute.yaml
+    │   ├── kustomization.yaml
+    │   ├── refgrant-go.yaml
+    │   └── refgrant-node.yaml
+    ├── github-runner
+    │   ├── deployment.yaml
+    │   ├── kubeconfig-configmap.yaml
+    │   ├── kustomization.yaml
+    │   ├── runner-secret.yaml
+    │   └── serviceaccount.yaml
+    ├── go-service
+    │   ├── base
+    │   │   ├── deployment.yaml
+    │   │   ├── kustomization.yaml
+    │   │   └── service.yaml
+    │   └── overlays
+    │       ├── ci-cd
+    │       │   ├── image-patch.yaml
+    │       │   └── kustomization.yaml
+    │       └── local
+    │           ├── image-patch.yaml
+    │           └── kustomization.yaml
+    ├── monitoring
+    │   ├── grafana-config.yaml
+    │   ├── grafana-deployment.yaml
+    │   ├── grafana-service.yaml
+    │   ├── kustomization.yaml
+    │   ├── otel-collector-config.yaml
+    │   ├── otel-collector.yaml
+    │   ├── prometheus-config.yaml
+    │   └── prometheus.yaml
+    └── node-service
+        ├── base
+        │   ├── deployment.yaml
+        │   ├── kustomization.yaml
+        │   └── service.yaml
+        └── overlays
+            ├── ci-cd
+            │   ├── image-patch.yaml
+            │   └── kustomization.yaml
+            └── local
+                ├── image-patch.yaml
+                └── kustomization.yaml
 
-1...
-``
+```
 
 ---
 
