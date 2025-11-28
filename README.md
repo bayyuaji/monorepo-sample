@@ -15,7 +15,7 @@ Included components:
 ---
 
 # Folder Structure
-Everything is organized using a single **Makefile**?
+Everything is organized using a single **Makefile**
 
 ---
 
@@ -106,8 +106,6 @@ Each folder contains:
 
 ---
 
-# Requiresites
-
 # Prerequisites
 
 Install the following tools before using this project:
@@ -150,14 +148,6 @@ export KUBECONFIG=$HOME/.kube/kind-monorepo-local
 make images
 make images-load
 ```
-
-
-2. Encode:
-
-```
-echo -n "YOUR_TOKEN" | base64
-```
-
 3. Deploy Core Components
 
 ```
@@ -185,7 +175,6 @@ ARC automatically manages:
 
 This setup ensures that **all CI/CD pipelines run locally** without relying on GitHub-hosted runners.
 
----
 
 ## 1. Set Required Environment Variables
 
@@ -204,9 +193,9 @@ make deploy-github-runner
 
 ```
 This command performs:
-### 1. Authentication to ghcr.io using your Github PAT
-### 2. INstallation of ARC controller & ARC CRDs + default Runner Scale Set
-### 3. Deployment of your custom Kustomize resources under k8s/github-runner
+1. Authentication to ghcr.io using your Github PAT
+2. INstallation of ARC controller & ARC CRDs + default Runner Scale Set
+3. Deployment of your custom Kustomize resources under k8s/github-runner
 
 ## 3. Verify Installation
 Check ARC controller:
@@ -263,6 +252,7 @@ Grafana
 kubectl port-forward svc/grafana -n monitoring 3001:3000
 http://localhost:3001
 ```
+---
 
 ## Cleanup
 Delete all workloads:
@@ -275,6 +265,7 @@ Delete Kind\D cluster
 make undeploy-all
 ```
 
+---
 # CI/CD
 
 Files:
